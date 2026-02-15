@@ -6,7 +6,7 @@ Este módulo proporciona las siguientes funciones principales para interactuar c
 
 - `checkCodexAvailable()`: Verifica si codex está disponible en el sistema y proporciona instrucciones si no lo está.
 - `runCodex(codexCmd, targetDir, prompt)`: Ejecuta codex en modo interactivo en el directorio especificado. El parámetro `prompt` es opcional; si no se proporciona, usa un prompt por defecto que indica leer SETUP.md.
-- `runCodexPassive(codexCmd, targetDir, prompt, options)`: Ejecuta codex en modo pasivo (no interactivo) con un prompt y retorna el resultado como string. Valida la configuración antes de ejecutar y lanza errores si hay problemas. Opciones incluyen `ephemeral`, `json`, y `outputFile`.
+- `runCodexPassive(codexCmd, targetDir, prompt, options)`: Ejecuta codex en modo pasivo (no interactivo) con un prompt y retorna el resultado como string. Valida la configuración antes de ejecutar y lanza errores si hay problemas. Opciones incluyen `ephemeral`, `json`, `outputFile` y `fullAuto`.
 - `validateCodexConfig()`: Valida la configuración de Codex CLI leyendo el archivo `config.toml` y verifica campos como `approval_policy`. Retorna un objeto con `valid` y `message` si hay errores.
 - `findCodexFromShell()`: Busca codex basado en el shell detectado.
 - `buildCodexProcess(codexCmd, prompt)`: Construye el proceso para ejecutar codex.

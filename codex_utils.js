@@ -386,6 +386,7 @@ export function checkCodexAvailable() {
 
 
 // Ejecuta codex en modo pasivo con un prompt y retorna el resultado
+// fullAuto: si es true, se ejecuta sin pedir confirmación (equivalente a --full-auto)
 export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
   // Validar configuración antes de ejecutar
   const configCheck = validateCodexConfig();
@@ -393,7 +394,7 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
     throw new Error(`Configuración de Codex inválida: ${configCheck.message}`);
   }
 
-  const { ephemeral = true, json = false, outputFile = null } = options;
+  const { ephemeral = true, json = false, outputFile = null, fullAuto = false } = options;
   
   log("");
   log("Ejecutando Codex en modo pasivo...");
@@ -415,6 +416,7 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
       const args = ['/c', codexCmd, 'exec'];
       if (ephemeral) args.push('--ephemeral');
       if (json) args.push('--json');
+      if (fullAuto) args.push('--full-auto');
       if (outputFile) args.push('--output-last-message', outputFile);
       args.push(prompt);
 
@@ -429,6 +431,7 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
       const args = [codexCmd, 'exec'];
       if (ephemeral) args.push('--ephemeral');
       if (json) args.push('--json');
+      if (fullAuto) args.push('--full-auto');
       if (outputFile) args.push('--output-last-message', outputFile);
       args.push(prompt);
 
