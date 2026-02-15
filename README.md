@@ -5,7 +5,7 @@
 Este módulo proporciona las siguientes funciones principales para interactuar con el CLI de Codex:
 
 - `checkCodexAvailable()`: Verifica si codex está disponible en el sistema y proporciona instrucciones si no lo está.
-- `runCodex(codexCmd, targetDir)`: Ejecuta codex en modo interactivo en el directorio especificado.
+- `runCodex(codexCmd, targetDir, prompt)`: Ejecuta codex en modo interactivo en el directorio especificado. El parámetro `prompt` es opcional; si no se proporciona, usa un prompt por defecto que indica leer SETUP.md.
 - `findCodexFromShell()`: Busca codex basado en el shell detectado.
 - `buildCodexProcess(codexCmd, prompt)`: Construye el proceso para ejecutar codex.
 - `canRunCodex(codexCmd)`: Verifica si el comando codex puede ejecutarse.

@@ -98,8 +98,8 @@ export function buildCodexProcess(codexCmd, prompt) {
   return { cmd: codexCmd, args: [], options: { shell: useShell } };
 }
 
-// Ejecuta codex en modo interactivo
-export async function runCodex(codexCmd, targetDir) {
+// Ejecuta codex en modo interactivo con un prompt personalizado (opcional)
+export async function runCodex(codexCmd, targetDir, prompt) {
   const setupPath = path.join(targetDir, "SETUP.md");
 
   log("");
@@ -107,12 +107,12 @@ export async function runCodex(codexCmd, targetDir) {
   log(`Usando: ${codexCmd}`);
   log("");
 
+  if (!prompt) {
+    prompt = `"Lee y sigue estrictamente SETUP.md en: ${setupPath} y luego termina."`;
+  }
+
   const ext = path.extname(codexCmd).toLowerCase();
   const useShell = process.platform === "win32" && (ext === ".cmd" || ext === ".ps1");
-
-  const prompt = [
-    `"Lee y sigue estrictamente SETUP.md en: ${setupPath} y luego termina."`
-  ].join("\n");
 
   const child = spawn(codexCmd, [prompt], {
     stdio: 'inherit',
