@@ -1,6 +1,6 @@
 {
   "name": "pigmalion-codex",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utilidades para Pigmalion Codex",
   "main": "codex_utils.js",
   "scripts": {
