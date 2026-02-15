@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import os from "node:os";
+import { spawn, spawnSync, execSync } from "node:child_process";
 
 // Registra un mensaje en la salida estándar
 export function log(msg) {
@@ -98,39 +99,55 @@ export function buildCodexProcess(codexCmd, prompt) {
   return { cmd: codexCmd, args: [], options: { shell: useShell } };
 }
 
-// Ejecuta codex en modo interactivo con un prompt personalizado (opcional)
-export async function runCodex(codexCmd, targetDir, prompt) {
-  const setupPath = path.join(targetDir, "SETUP.md");
 
-  log("");
-  log("Iniciando Codex en modo interactivo...");
-  log(`Usando: ${codexCmd}`);
-  log("");
-
-  if (!prompt) {
-    prompt = `"Lee y sigue estrictamente SETUP.md en: ${setupPath} y luego termina."`;
+// Valida la configuración de Codex CLI
+export function validateCodexConfig() {
+  const configPath = path.join(os.homedir(), '.codex', 'config.toml');
+  
+  if (!fs.existsSync(configPath)) {
+    return {
+      valid: false,
+      message: `No se encontró el archivo de configuración de Codex en: ${configPath}. ` +
+               `Ejecuta 'codex login' para inicializar la configuración.`
+    };
   }
 
-  const ext = path.extname(codexCmd).toLowerCase();
-  const useShell = process.platform === "win32" && (ext === ".cmd" || ext === ".ps1");
-
-  const child = spawn(codexCmd, [prompt], {
-    stdio: 'inherit',
-    shell: useShell,
-    cwd: targetDir
-  });
-
-  return new Promise((resolve) => {
-    child.on('close', (code) => {
-      log(`Codex terminó con código ${code}.`);
-      resolve();
-    });
-    child.on('error', (err) => {
-      log(`Error al iniciar Codex: ${err.message}`);
-      resolve();
-    });
-  });
+  try {
+    const configContent = fs.readFileSync(configPath, 'utf8');
+    const lines = configContent.split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('approval_policy')) {
+        const match = trimmed.match(/approval_policy\s*=\s*(.+)/);
+        if (match) {
+          const value = match[1].trim();
+          // Remover comillas si las hay
+          const cleanValue = value.replace(/^["']|["']$/g, '');
+          
+          if (cleanValue === 'true' || cleanValue === 'false') {
+            return { valid: true };
+          } else {
+            return {
+              valid: false,
+              message: `El campo 'approval_policy' en ${configPath} tiene un valor inválido: "${cleanValue}". ` +
+                       `Debe ser 'true' o 'false' (sin comillas). Cambia la línea a: approval_policy = true`
+            };
+          }
+        }
+      }
+    }
+    
+    // Si no encontró el campo, asumir válido (podría tener valor por defecto)
+    return { valid: true };
+  } catch (err) {
+    return {
+      valid: false,
+      message: `Error al leer el archivo de configuración ${configPath}: ${err.message}`
+    };
+  }
 }
+
 
 // Busca codex en un directorio bin
 export function findCodexInBinDir(binDir) {
@@ -364,3 +381,116 @@ export function checkCodexAvailable() {
   log("- Luego vuelve a ejecutar `npx pigmalion-setup`.");
   return null;
 }
+
+
+
+
+// Ejecuta codex en modo pasivo con un prompt y retorna el resultado
+export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
+  // Validar configuración antes de ejecutar
+  const configCheck = validateCodexConfig();
+  if (!configCheck.valid) {
+    throw new Error(`Configuración de Codex inválida: ${configCheck.message}`);
+  }
+
+  const { ephemeral = true, json = false, outputFile = null } = options;
+  
+  log("");
+  log("Ejecutando Codex en modo pasivo...");
+  log(`Usando: ${codexCmd}`);
+  log(`Prompt: ${prompt}`);
+  log("");
+
+  // Construye el comando completo
+  let fullCommand = `${codexCmd} exec`;
+  if (ephemeral) fullCommand += ' --ephemeral';
+  if (json) fullCommand += ' --json';
+  if (outputFile) fullCommand += ` --output-last-message "${outputFile}"`;
+  fullCommand += ` "${prompt}"`;
+
+  try {
+    let result;
+    if (process.platform === 'win32' && codexCmd.toLowerCase().endsWith('.cmd')) {
+      // En Windows, usar cmd.exe con args separados para evitar escaping issues
+      const args = ['/c', codexCmd, 'exec'];
+      if (ephemeral) args.push('--ephemeral');
+      if (json) args.push('--json');
+      if (outputFile) args.push('--output-last-message', outputFile);
+      args.push(prompt);
+
+      result = spawnSync('cmd.exe', args, {
+        cwd: targetDir,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: process.env
+      });
+    } else {
+      // Para otros casos, usar spawnSync sin shell
+      const args = [codexCmd, 'exec'];
+      if (ephemeral) args.push('--ephemeral');
+      if (json) args.push('--json');
+      if (outputFile) args.push('--output-last-message', outputFile);
+      args.push(prompt);
+
+      result = spawnSync(codexCmd, args.slice(1), {  // args[0] es el comando, args.slice(1) son los args
+        cwd: targetDir,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: process.env,
+        shell: false
+      });
+    }
+
+    if (result.error) {
+      throw new Error(`Error al ejecutar Codex: ${result.error.message}`);
+    }
+
+    if (result.status !== 0) {
+      throw new Error(`Codex terminó con error (código ${result.status}): ${result.stderr}`);
+    }
+
+    // Retorna el resultado (stdout)
+    const output = result.stdout.trim();
+    log(`Resultado obtenido: ${output.substring(0, 100)}...`); // Log resumido
+    return output;
+  } catch (err) {
+    log(`Error en runCodexPassive: ${err.message}`);
+    throw err;
+  }
+}
+
+
+// Ejecuta codex en modo interactivo con un prompt personalizado (opcional)
+export async function runCodex(codexCmd, targetDir, prompt) {
+  const setupPath = path.join(targetDir, "SETUP.md");
+
+  log("");
+  log("Iniciando Codex en modo interactivo...");
+  log(`Usando: ${codexCmd}`);
+  log("");
+
+  if (!prompt) {
+    prompt = `"Lee y sigue estrictamente SETUP.md en: ${setupPath} y luego termina."`;
+  }
+
+  const ext = path.extname(codexCmd).toLowerCase();
+  const useShell = process.platform === "win32" && (ext === ".cmd" || ext === ".ps1");
+
+  const child = spawn(codexCmd, [prompt], {
+    stdio: 'inherit',
+    shell: useShell,
+    cwd: targetDir
+  });
+
+  return new Promise((resolve) => {
+    child.on('close', (code) => {
+      log(`Codex terminó con código ${code}.`);
+      resolve();
+    });
+    child.on('error', (err) => {
+      log(`Error al iniciar Codex: ${err.message}`);
+      resolve();
+    });
+  });
+}
+
