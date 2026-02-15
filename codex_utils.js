@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 
+// Registra un mensaje en la salida estándar
 export function log(msg) {
   process.stdout.write(`${msg}\n`);
 }
@@ -18,6 +19,7 @@ export function normalizePath(p) {
   return p;
 }
 
+// Detecta el shell del sistema
 export function detectShell() {
   const env = process.env;
   const shell = (env.SHELL || "").toLowerCase();
@@ -48,6 +50,7 @@ export function ensureWindowsExecutable(codexCmd) {
   return codexCmd;
 }
 
+// Verifica si el comando codex puede ejecutarse
 export function canRunCodex(codexCmd) {
   if (!codexCmd) return false;
   const ext = path.extname(codexCmd).toLowerCase();
@@ -63,6 +66,7 @@ export function canRunCodex(codexCmd) {
   return true;
 }
 
+// Resuelve la ruta al archivo codex.js desde un comando .cmd
 export function resolveCodexJsFromCmd(codexCmd) {
   if (!codexCmd.toLowerCase().endsWith(".cmd")) return null;
   const binDir = path.dirname(codexCmd);
@@ -78,6 +82,7 @@ export function resolveCodexJsFromCmd(codexCmd) {
   return null;
 }
 
+// Construye el proceso para ejecutar codex
 export function buildCodexProcess(codexCmd, prompt) {
   const codexJs = resolveCodexJsFromCmd(codexCmd);
   if (codexJs) {
@@ -93,6 +98,7 @@ export function buildCodexProcess(codexCmd, prompt) {
   return { cmd: codexCmd, args: [], options: { shell: useShell } };
 }
 
+// Ejecuta codex en modo interactivo
 export async function runCodex(codexCmd, targetDir) {
   const setupPath = path.join(targetDir, "SETUP.md");
 
@@ -126,6 +132,7 @@ export async function runCodex(codexCmd, targetDir) {
   });
 }
 
+// Busca codex en un directorio bin
 export function findCodexInBinDir(binDir) {
   if (!binDir) return null;
   const normalized = normalizePath(binDir);
@@ -146,6 +153,7 @@ export function findCodexInBinDir(binDir) {
   return null;
 }
 
+// Busca codex en la instalación global de npm
 export function findCodexFromNpmGlobal() {
   const npmPrefix = spawnSync("npm", ["prefix", "-g"], {
     encoding: "utf8",
@@ -161,6 +169,7 @@ export function findCodexFromNpmGlobal() {
   return findCodexInBinDir(path.join(prefix, "bin"));
 }
 
+// Busca codex usando el prefijo de npm
 export function findCodexFromNpmPrefix() {
   const npmPrefix = spawnSync("npm", ["prefix", "-g"], {
     encoding: "utf8",
@@ -191,11 +200,13 @@ export function findCodexFromNpmPrefix() {
   return null;
 }
 
+// Busca codex en node_modules locales
 export function findCodexFromLocalNodeModules() {
   const localBin = path.join(process.cwd(), "node_modules", ".bin");
   return findCodexInBinDir(localBin);
 }
 
+// Busca codex usando el comando 'where' (Windows)
 export function findCodexFromWhere() {
   const whereResult = spawnSync("where", ["codex"], {
     encoding: "utf8",
@@ -213,6 +224,7 @@ export function findCodexFromWhere() {
   return lines[0];
 }
 
+// Busca codex usando el comando 'which' (Unix)
 export function findCodexFromWhich() {
   const whichResult = spawnSync("which", ["codex"], {
     encoding: "utf8",
@@ -242,6 +254,7 @@ export function findCodexFromWhich() {
   return null;
 }
 
+// Busca codex basado en el shell detectado
 export function findCodexFromShell() {
   const shell = detectShell();
   if (shell === "bash") return findCodexFromWhich();
@@ -249,6 +262,7 @@ export function findCodexFromShell() {
   return null;
 }
 
+// Busca codex en la instalación global de pnpm
 export function findCodexFromPnpmGlobal() {
   const pnpmBin = spawnSync("pnpm", ["bin", "-g"], {
     encoding: "utf8",
@@ -261,6 +275,7 @@ export function findCodexFromPnpmGlobal() {
   return findCodexInBinDir(pnpmBin.stdout.trim());
 }
 
+// Busca codex en la instalación global de yarn
 export function findCodexFromYarnGlobal() {
   const yarnBin = spawnSync("yarn", ["global", "bin"], {
     encoding: "utf8",
@@ -273,6 +288,7 @@ export function findCodexFromYarnGlobal() {
   return findCodexInBinDir(yarnBin.stdout.trim());
 }
 
+// Busca codex en rutas conocidas del sistema
 export function findCodexFromKnownPaths() {
   const bins = [];
   if (process.env.npm_config_prefix) {
@@ -310,6 +326,7 @@ export function findCodexFromKnownPaths() {
   return null;
 }
 
+// Verifica si codex está disponible en el sistema
 export function checkCodexAvailable() {
   const candidates = [
     findCodexFromShell(),
