@@ -1,11 +1,11 @@
-import { runCodexPassive, checkCodexAvailable, validateCodexConfig } from './codex_utils.js';
+import { runCodexPassive, isCodexAvailable, validateCodexConfig } from './codex_utils.js';
 
 // Suprimir warnings de deprecation para una salida limpia
 process.noDeprecation = true;
 
-const codexCmd = checkCodexAvailable();
-if (!codexCmd) {
+if (!isCodexAvailable()) {
   console.error('Codex no está disponible. Asegúrate de que esté instalado y en PATH.');
+  console.error('Instala con: npm install -g @openai/codex-cli');
   process.exit(1);
 }
 
@@ -17,13 +17,18 @@ if (!configCheck.valid) {
 }
 
 const prompt = 'What is Node.js in one sentence?';
-const targetDir = process.cwd();
+const options = {
+  targetDir: process.cwd(),
+  ephemeral: true,
+  json: false
+};
 
 console.log('Iniciando prueba de runCodexPassive...');
 console.log(`Prompt: ${prompt}`);
+console.log(`Opciones:`, options);
 
 try {
-  const result = runCodexPassive(codexCmd, targetDir, prompt);
+  const result = runCodexPassive(prompt, options);
   console.log('Resultado exitoso:');
   console.log(result);
 } catch (error) {

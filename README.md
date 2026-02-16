@@ -1,53 +1,178 @@
-# Wrapper en node.js para Codex Cli de OpenAI
+# Pigmalion Codex - Wrapper para OpenAI Codex CLI
+
+Un wrapper minimalista y simple para Node.js que facilita el uso del CLI de OpenAI Codex en tus proyectos.
+
+## Características
+
+- ✅ **Auto-detección**: Encuentra automáticamente Codex en tu sistema
+- ✅ **Cross-platform**: Funciona en Windows, Linux y macOS
+- ✅ **Configurable**: Personaliza la ruta vía variables de entorno
+- ✅ **Modo pasivo e interactivo**: Ejecuta comandos de forma automática o interactiva
+- ✅ **Validación automática**: Verifica configuración y disponibilidad
+
+## Instalación
+
+```bash
+npm install -g @openai/codex-cli
+```
+
+Luego configura tu API key:
+
+```bash
+codex login
+```
+
+## Uso Básico
+
+```javascript
+import { runCodexPassive, isCodexAvailable } from './codex_utils.js';
+
+if (!isCodexAvailable()) {
+  console.error("Codex no está disponible. Instala con: npm install -g @openai/codex-cli");
+  process.exit(1);
+}
+
+// Ejecutar en modo pasivo (sin interacción)
+const result = await runCodexPassive("Explica qué es Node.js en una oración.", {
+  targetDir: "/mi/proyecto",  // opcional, default: process.cwd()
+  ephemeral: true,           // opcional
+  json: false,               // opcional
+  outputFile: null,          // opcional
+  fullAuto: true             // opcional
+});
+
+console.log(result);
+```
+
+## Migración desde v1.x
+
+### ⚠️ Breaking Changes en v2.0.0
+
+La versión 2.0.0 introduce cambios importantes para simplificar la API:
+
+#### Cambios en `runCodexPassive()`
+```javascript
+// ❌ Antes (v1.x)
+const codexCmd = checkCodexAvailable();
+const result = runCodexPassive(codexCmd, targetDir, prompt, options);
+
+// ✅ Ahora (v2.0.0)
+const result = runCodexPassive(prompt, { targetDir, ...options });
+```
+
+#### Cambios en `runCodex()`
+```javascript
+// ❌ Antes (v1.x)
+const codexCmd = checkCodexAvailable();
+await runCodex(codexCmd, targetDir, prompt);
+
+// ✅ Ahora (v2.0.0)
+await runCodex(prompt, { targetDir });
+```
+
+#### Funciones eliminadas
+- `checkCodexAvailable()` → Usa `isCodexAvailable()`
+- `findCodexFrom*()` → Funciones fusionadas en `findCodex()`
+- `buildCodexProcess()` → Eliminada (no usada)
+- `resolveCodexJsFromCmd()` → Eliminada (no usada)
+- `normalizePath()` → Eliminada (no usada)
+
+#### Nuevas funciones
+- `isCodexAvailable()`: Verifica disponibilidad (reemplaza `checkCodexAvailable()`)
+- `getCodexPath()`: Obtiene la ruta encontrada
+- `findCodex()`: Busca Codex en el sistema
 
 ## Funciones Principales
 
-Este módulo proporciona las siguientes funciones principales para interactuar con el CLI de Codex:
-
-- `checkCodexAvailable()`: Verifica si codex está disponible en el sistema y proporciona instrucciones si no lo está.
-- `runCodex(codexCmd, targetDir, prompt)`: Ejecuta codex en modo interactivo en el directorio especificado. El parámetro `prompt` es opcional; si no se proporciona, usa un prompt por defecto que indica leer SETUP.md.
-- `runCodexPassive(codexCmd, targetDir, prompt, options)`: Ejecuta codex en modo pasivo (no interactivo) con un prompt y retorna el resultado como string. Valida la configuración antes de ejecutar y lanza errores si hay problemas. Opciones incluyen `ephemeral`, `json`, `outputFile` y `fullAuto`.
-- `validateCodexConfig()`: Valida la configuración de Codex CLI leyendo el archivo `config.toml` y verifica campos como `approval_policy`. Retorna un objeto con `valid` y `message` si hay errores.
-- `findCodexFromShell()`: Busca codex basado en el shell detectado.
-- `buildCodexProcess(codexCmd, prompt)`: Construye el proceso para ejecutar codex.
-- `canRunCodex(codexCmd)`: Verifica si el comando codex puede ejecutarse.
-
-## Funciones Auxiliares
-
-Funciones adicionales para soporte y detección:
-
-- `log(msg)`: Registra un mensaje en la salida estándar.
-- `normalizePath(p)`: Normaliza rutas de archivos, especialmente para Windows (convierte rutas MSYS a rutas de Windows).
-- `detectShell()`: Detecta el shell del sistema (bash, powershell, cmd, etc.).
-- `ensureWindowsExecutable(codexCmd)`: Asegura que el comando sea ejecutable en Windows agregando extensiones si es necesario.
-- `resolveCodexJsFromCmd(codexCmd)`: Resuelve la ruta al archivo codex.js desde un comando .cmd.
-- `findCodexInBinDir(binDir)`: Busca codex en un directorio bin específico.
-- `findCodexFromNpmGlobal()`: Busca codex en la instalación global de npm.
-- `findCodexFromNpmPrefix()`: Busca codex usando el prefijo de npm.
-- `findCodexFromLocalNodeModules()`: Busca codex en node_modules locales.
-- `findCodexFromWhere()`: Busca codex usando el comando 'where' (Windows).
-- `findCodexFromWhich()`: Busca codex usando el comando 'which' (Unix).
-- `findCodexFromPnpmGlobal()`: Busca codex en la instalación global de pnpm.
-- `findCodexFromYarnGlobal()`: Busca codex en la instalación global de yarn.
-- `findCodexFromKnownPaths()`: Busca codex en rutas conocidas del sistema.
-
-## Uso
-
-### Ejemplo de runCodexPassive
+### `isCodexAvailable()`
+Verifica si Codex está instalado y disponible en el sistema.
 
 ```javascript
-import { runCodexPassive, checkCodexAvailable } from './codex_utils.js';
+import { isCodexAvailable } from './codex_utils.js';
 
-const codexCmd = checkCodexAvailable();
-if (codexCmd) {
-  try {
-    const result = runCodexPassive(codexCmd, process.cwd(), 'Explica qué es Node.js en una oración.');
-    console.log('Resultado:', result);
-  } catch (error) {
-    console.error('Error:', error.message);
-  }
+if (isCodexAvailable()) {
+  console.log("✅ Codex está listo para usar");
+} else {
+  console.log("❌ Codex no encontrado");
 }
 ```
 
-Esta función valida automáticamente la configuración de Codex antes de ejecutar y retorna el resultado generado por Codex sin requerir interacción del usuario.
+### `runCodexPassive(prompt, options)`
+Ejecuta Codex en modo pasivo (no interactivo) y retorna el resultado como string.
+
+**Parámetros:**
+- `prompt` (string): El prompt para Codex
+- `options` (object, opcional): Opciones de configuración
+
+**Opciones disponibles:**
+- `targetDir` (string): Directorio de trabajo (default: `process.cwd()`)
+- `ephemeral` (boolean): Modo efímero (default: `true`)
+- `json` (boolean): Salida en formato JSON (default: `false`)
+- `outputFile` (string): Archivo para guardar la salida (default: `null`)
+- `fullAuto` (boolean): Modo completamente automático (default: `true`)
+
+**Ejemplo:**
+```javascript
+const result = await runCodexPassive("Genera un ejemplo de código JavaScript", {
+  targetDir: "./mi-proyecto",
+  json: true
+});
+```
+
+### `runCodex(prompt, options)`
+Ejecuta Codex en modo interactivo (con interfaz de usuario).
+
+**Parámetros:**
+- `prompt` (string): El prompt inicial para Codex
+- `options` (object, opcional): Opciones de configuración
+
+**Opciones disponibles:**
+- `targetDir` (string): Directorio de trabajo (default: `process.cwd()`)
+
+**Ejemplo:**
+```javascript
+await runCodex("Ayúdame a refactorizar este código", {
+  targetDir: "./src"
+});
+```
+
+## Configuración
+
+### Variables de Entorno
+
+Puedes personalizar la ruta a Codex estableciendo la variable de entorno `CODEX_CMD`:
+
+```bash
+# En .env
+CODEX_CMD=/ruta/personalizada/a/codex
+
+# O en terminal
+export CODEX_CMD=/usr/local/bin/codex
+```
+
+Si no se establece, el wrapper buscará automáticamente en ubicaciones comunes.
+
+## Funciones Auxiliares
+
+### `getCodexPath()`
+Retorna la ruta completa al ejecutable de Codex encontrado.
+
+### `findCodex()`
+Busca y retorna la ruta a Codex en el sistema.
+
+### `validateCodexConfig()`
+Valida la configuración de Codex CLI.
+
+### `log(msg)`
+Registra un mensaje en la consola.
+
+## Errores Comunes
+
+- **"Codex no está disponible"**: Asegúrate de tener instalado `@openai/codex-cli` y configurado con `codex login`
+- **"Configuración inválida"**: Ejecuta `codex login` para configurar tu API key
+- **Errores de PATH**: En Windows, el wrapper busca automáticamente en rutas comunes de npm
+
+## Licencia
+
+MIT
 
