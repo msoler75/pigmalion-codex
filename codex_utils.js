@@ -3,23 +3,6 @@ import path from "node:path";
 import os from "node:os";
 import { spawn, spawnSync, execSync } from "node:child_process";
 
-// Ensure git is available in PATH for Windows compatibility
-if (process.platform === 'win32') {
-  const gitPaths = [
-    'C:\\Program Files\\Git\\mingw64\\bin',
-    'C:\\Program Files\\Git\\cmd',
-    'C:\\Program Files\\Git\\bin'
-  ];
-  for (const gitPath of gitPaths) {
-    if (!process.env.PATH.includes(gitPath)) {
-      process.env.PATH = `${gitPath};${process.env.PATH}`;
-    }
-  }
-}
-
-// Git executable path for Windows compatibility
-const GIT_CMD = process.platform === 'win32' ? 'C:\\Program Files\\Git\\mingw64\\bin\\git.exe' : 'git';
-
 // Registra un mensaje en la salida estándar
 export function log(msg) {
   process.stdout.write(`${msg}\n`);
