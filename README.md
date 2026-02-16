@@ -1,5 +1,9 @@
 # Wrapper en node.js para Codex Cli de OpenAI
 
+## Compatibilidad con Windows
+
+Este módulo incluye configuración automática de PATH para Git en Windows, asegurando que los comandos `spawnSync` y `execSync` puedan encontrar el ejecutable de Git correctamente. Todas las llamadas al sistema incluyen `env: process.env` para compatibilidad completa.
+
 ## Funciones Principales
 
 Este módulo proporciona las siguientes funciones principales para interactuar con el CLI de Codex:
