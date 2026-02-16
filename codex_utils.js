@@ -18,6 +18,7 @@ if (process.platform === 'win32') {
 }
 
 // Git executable path for Windows compatibility
+// This resolves issue #2: Fix Windows Git PATH compatibility in spawnSync calls
 const GIT_CMD = process.platform === 'win32' ? 'C:\\Program Files\\Git\\mingw64\\bin\\git.exe' : 'git';
 
 // Registra un mensaje en la salida estándar
