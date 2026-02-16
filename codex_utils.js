@@ -402,6 +402,8 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
   log(`Prompt: ${prompt}`);
   log("");
 
+  prompt = preparePrompt(prompt);
+
   // Construye el comando completo
   let fullCommand = `${codexCmd} exec`;
   if (ephemeral) fullCommand += ' --ephemeral';
@@ -464,17 +466,14 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
 
 
 // Ejecuta codex en modo interactivo con un prompt personalizado (opcional)
-export async function runCodex(codexCmd, targetDir, prompt) {
-  const setupPath = path.join(targetDir, "SETUP.md");
+export async function runCodex(codexCmd, targetDir, prompt) {  
 
   log("");
   log("Iniciando Codex en modo interactivo...");
   log(`Usando: ${codexCmd}`);
   log("");
 
-  if (!prompt) {
-    prompt = `"Lee y sigue estrictamente SETUP.md en: ${setupPath} y luego termina."`;
-  }
+  prompt = preparePrompt(prompt);
 
   const ext = path.extname(codexCmd).toLowerCase();
   const useShell = process.platform === "win32" && (ext === ".cmd" || ext === ".ps1");
@@ -497,3 +496,8 @@ export async function runCodex(codexCmd, targetDir, prompt) {
   });
 }
 
+
+// hay que unir todas las lineas del prompt en una sola
+export function preparePrompt(prompt) {
+  return prompt.split('\n').map(line => line.trim()).join(' ');
+}
