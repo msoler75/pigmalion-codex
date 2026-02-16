@@ -394,7 +394,7 @@ export function runCodexPassive(codexCmd, targetDir, prompt, options = {}) {
     throw new Error(`Configuración de Codex inválida: ${configCheck.message}`);
   }
 
-  const { ephemeral = true, json = false, outputFile = null, fullAuto = false } = options;
+  const { ephemeral = true, json = false, outputFile = null, fullAuto = true } = options;
   
   log("");
   log("Ejecutando Codex en modo pasivo...");
@@ -499,5 +499,5 @@ export async function runCodex(codexCmd, targetDir, prompt) {
 
 // hay que unir todas las lineas del prompt en una sola
 export function preparePrompt(prompt) {
-  return prompt.split('\n').map(line => line.trim()).join(' ');
+  return prompt.split('\n').map(line => line.trim()).join('<br>');
 }
